@@ -1,3 +1,8 @@
+// ─── Config ───
+// In production: Vercel frontend talks to Render backend via /api rewrites
+// Locally or when API_BASE is set, use that directly
+const API_BASE = window.__API_BASE || ''
+
 // ─── State ───
 let selectedTemplate = null
 let selectedProof = null
@@ -47,7 +52,7 @@ function goToStep(n) {
 // ─── Step 1: Load templates ───
 async function loadTemplates() {
   try {
-    const res = await fetch('/api/templates')
+    const res = await fetch(API_BASE + '/api/templates')
     allTemplates = await res.json()
     const grid = clearEl('templates-grid')
     document.getElementById('templates-loading').style.display = 'none'
@@ -114,7 +119,7 @@ document.getElementById('logo-input').addEventListener('change', async (e) => {
   const form = new FormData()
   form.append('logo', file)
   try {
-    const res = await fetch('/api/upload-logo', { method: 'POST', body: form })
+    const res = await fetch(API_BASE + '/api/upload-logo', { method: 'POST', body: form })
     logoData = await res.json()
 
     const colorsEl = document.getElementById('logo-colors')
@@ -221,12 +226,12 @@ async function generateProofs() {
     log('log-panel', 'No logo — using default palettes')
   }
 
-  const logoUrl = logoData ? window.location.origin + '/api/logos/' + logoData.logoId : null
+  const logoUrl = logoData ? (API_BASE || window.location.origin) + '/api/logos/' + logoData.logoId : null
 
   log('log-panel', 'Sending 3 render requests to Bannerbear...', 'info')
 
   try {
-    const res = await fetch('/api/generate-proofs', {
+    const res = await fetch(API_BASE + '/api/generate-proofs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -293,7 +298,7 @@ async function pollProofs() {
 
   for (const proof of pending) {
     try {
-      const res = await fetch('/api/renders/' + proof.uid)
+      const res = await fetch(API_BASE + '/api/renders/' + proof.uid)
       const data = await res.json()
       proof.status = data.status
       if (data.image_url) {
@@ -346,14 +351,14 @@ document.getElementById('btn-approve').addEventListener('click', async () => {
         modifications.push({ name: layer.name, text: textFields[layer.name] })
       }
       if (layer.name.toLowerCase().includes('face') && logoData) {
-        modifications.push({ name: layer.name, image_url: window.location.origin + '/api/logos/' + logoData.logoId })
+        modifications.push({ name: layer.name, image_url: (API_BASE || window.location.origin) + '/api/logos/' + logoData.logoId })
       }
       if (layer.name.toLowerCase().includes('logo') && logoData) {
-        modifications.push({ name: layer.name, image_url: window.location.origin + '/api/logos/' + logoData.logoId })
+        modifications.push({ name: layer.name, image_url: (API_BASE || window.location.origin) + '/api/logos/' + logoData.logoId })
       }
     })
 
-    const res = await fetch('/api/approve', {
+    const res = await fetch(API_BASE + '/api/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ template_uid: selectedTemplate.uid, modifications: modifications }),
@@ -363,7 +368,7 @@ document.getElementById('btn-approve').addEventListener('click', async () => {
     log('log-panel-pdf', 'Render job: ' + data.uid, 'info')
 
     const pollPdf = async () => {
-      const check = await fetch('/api/renders/' + data.uid)
+      const check = await fetch(API_BASE + '/api/renders/' + data.uid)
       const pdfData = await check.json()
 
       if (pdfData.status === 'completed') {

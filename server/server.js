@@ -9,8 +9,22 @@ const BB_API_KEY = process.env.BANNERBEAR_API_KEY || 'bb_pr_f70070a567c20a6a1633
 const BB_BASE = 'https://api.bannerbear.com/v2'
 const BB_SYNC = 'https://sync.api.bannerbear.com/v2'
 
+// CORS — allow Vercel frontend
+const CLIENT_URL = process.env.CLIENT_URL || '*'
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  if (CLIENT_URL === '*' || (origin && CLIENT_URL.split(',').some(u => origin.startsWith(u.trim())))) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*')
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  if (req.method === 'OPTIONS') return res.sendStatus(204)
+  next()
+})
+
 app.use(express.json())
-app.use(express.static(path.join(__dirname, 'public')))
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
 
