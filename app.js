@@ -1,7 +1,5 @@
 // ─── Config ───
-// In production: Vercel frontend talks to Render backend via /api rewrites
-// Locally or when API_BASE is set, use that directly
-const API_BASE = window.__API_BASE || ''
+const API_BASE = ''
 
 // ─── State ───
 let selectedTemplate = null
