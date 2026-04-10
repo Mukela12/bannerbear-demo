@@ -110,7 +110,7 @@ app.post('/api/render-sync', async (req, res) => {
 
 app.post('/api/generate-proofs', async (req, res) => {
   try {
-    const { template_uid, text_fields, logo_url, palettes } = req.body
+    const { template_uid, text_fields, logo_url, image_fields, palettes } = req.body
     if (!template_uid) return res.status(400).json({ error: 'template_uid required' })
 
     const template = await bbFetch(`/templates/${template_uid}`)
@@ -137,10 +137,10 @@ app.post('/api/generate-proofs', async (req, res) => {
         if (text_fields && text_fields[layer.name]) {
           modifications.push({ name: layer.name, text: text_fields[layer.name] })
         }
-        if (logo_url && layer.name.toLowerCase().includes('logo')) {
-          modifications.push({ name: layer.name, image_url: logo_url })
-        }
-        if (layer.name.toLowerCase().includes('face') && logo_url) {
+        // Per-layer image map (logo, headshot, background_image, etc.)
+        if (image_fields && image_fields[layer.name]) {
+          modifications.push({ name: layer.name, image_url: image_fields[layer.name] })
+        } else if (logo_url && /logo|face/i.test(layer.name)) {
           modifications.push({ name: layer.name, image_url: logo_url })
         }
         if (layer.color !== undefined || layer.background !== undefined) {
